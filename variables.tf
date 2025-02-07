@@ -27,6 +27,7 @@ variable "key_vault_name" {
 variable "workspace_list" {
   description = "List of ML workspaces"
   type        = list(string)
+  default     = ["workspace1", "workspace2", "workspace3"]
 }
 
 #Tenant_id
