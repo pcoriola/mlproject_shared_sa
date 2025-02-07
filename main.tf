@@ -1,6 +1,15 @@
+#Extract subscription details
+data "azurerm_subscription" "current" {}
+
 #Extract RG name
 data "azurerm_resource_group" "resource_group" {
   name = var.resource_group_name
+}
+
+#Extract Key Vault details
+data "azurerm_key_vault" "keyvault" {
+  name                = var.key_vault_name
+  resource_group_name = var.resource_group_name
 }
 
 #Extract storage account name
@@ -58,3 +67,30 @@ output "sas_token" {
   }
   sensitive = true
 }
+
+#Create Key Vault
+resource "azurerm_key_vault" "key_vault" {
+  name                = "keyvault-${data.azurerm_storage_account.storage_account.name}"
+  resource_group_name = data.azurerm_resource_group.resource_group.name
+  location            = var.location
+  sku_name            = "standard"
+  tenant_id           = data.azurerm_subscription.current.tenant_id
+}
+
+#Upload sas token into KV
+resource "azurerm_key_vault_secret" "sas_token_kv" {
+  count        = length(var.workspace_id)
+  name         = "sas-token-kv-${var.workspace_id[count.index]}"
+  value        = azurerm_storage_blob_container_sas.sas_token[count.index].sas
+  key_vault_id = azurerm_key_vault.ml_key_vault.id
+}
+
+# Allow ml workspace access to SAS token
+resource "azurerm_key_vault_access_policy" "workspace_access" {
+  count        = length(var.workspace_id)
+  key_vault_id = azurerm_key_vault.keyvault.id
+  tenant_id = data.azurerm_subscription.current.tenant_id
+  object_id = var.workspace_id[count.index]
+  secret_permissions = ["Get"]
+}
+
