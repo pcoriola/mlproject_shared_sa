@@ -11,23 +11,23 @@ data "azurerm_storage_account" "storage_account" {
 
 #Extract workspace details
 data "azurerm_machine_learning_workspace" "workspace" {
-  for_each            = toset(var.workspace_name)
+  for_each            = toset(var.workspace_list)
   name                = each.key
   resource_group_name = var.resource_group_name
 }
 
 #Create storage containers
 resource "azurerm_storage_container" "storage_container" {
-  count                = length(var.workspace_names)
-  name                 = "storage-container-${var.workspace_names[count.index]}"
+  count                = length(var.workspace_list)
+  name                 = "storage-container-${var.workspace_list[count.index]}"
   storage_account_name = data.azurerm_storage_account.storage_account.name
   container_access_type = "private"
 }
 
 #Enable system-assigned managed identity on workspaces
 resource "azurerm_machine_learning_workspace" "workspace" {
-  count               = length(var.workspace_names)
-  name                = var.workspace_names[count.index]
+  count               = length(var.workspace_list)
+  name                = var.workspace_list[count.index]
   resource_group_name = var.resource_group_name
   location            = var.location
 
@@ -38,8 +38,8 @@ resource "azurerm_machine_learning_workspace" "workspace" {
 
 #Perform role assignment to allow each ml workspace to access only its storage container
 resource "azurerm_role_assignment" "container_access" {
-  count               = length(var.workspace_names)
+  count               = length(var.workspace_list)
   scope               = azurerm_storage_container.storage_container[count.index].resource_manager_id
   role_definition_name = "Storage Blob Data Contributor"
-  principal_id        = data.azurerm_machine_learning_workspace.workspace[var.workspace_names[count.index]].identity[0].principal_id
+  principal_id        = data.azurerm_machine_learning_workspace.workspace[var.workspace_list[count.index]].identity[0].principal_id
 }
