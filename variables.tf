@@ -1,3 +1,9 @@
+# Subscription ID
+variable "subscription_id" {
+  description = "Azure Subscription ID"
+  type        = string
+}
+
 #Resource group name
 variable "resource_group_name" {
   description = "Resource Group"
@@ -41,3 +47,17 @@ variable "tenant_id" {
 #  description = "ML Project Workspace IDs"
 #  type        = list(string)
 #}
+
+#Service Principal Client ID
+variable "client_id" {
+  description = "Service Principal Client_ID"
+  type        = string
+}
+
+#Service Principal Client Secret
+variable "client_secret" {
+  description = "Service Principal Client_Secret"
+  type        = string
+  sensitive   = true
+}
+
